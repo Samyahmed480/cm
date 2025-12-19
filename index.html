@@ -6,11 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مولد أكواد الاشتراك - CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>body { font-family: 'Cairo', sans-serif; }</style>
+    <script>
+        // Dark Mode Init
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
 </head>
-<body class="bg-slate-50 min-h-screen p-4 md:p-8">
+<body class="bg-slate-50 dark:bg-slate-950 min-h-screen p-4 md:p-8 transition-colors duration-300">
     <!-- Auth Overlay -->
     <div id="auth-overlay" class="fixed inset-0 z-[100] bg-slate-900 flex flex-col items-center justify-center p-4 transition-opacity duration-300">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md text-center border-4 border-blue-100">
@@ -28,27 +41,124 @@
     </div>
 
     <div class="max-w-6xl mx-auto">
-        <header class="mb-8 text-center">
-            <h1 class="text-3xl font-bold text-slate-800">CRM Subscription Manager</h1>
-            <p class="text-slate-500">لوحة التحكم في الاشتراكات والأكواد</p>
+        <header class="mb-6 text-center relative">
+            <button onclick="toggleDarkMode()" class="absolute top-0 left-0 p-2 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
+                <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <h1 class="text-3xl font-bold text-slate-800 dark:text-white">CRM Subscription Manager</h1>
+            <p class="text-slate-500 dark:text-slate-400">لوحة التحكم في الاشتراكات والأكواد</p>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Navigation Tabs -->
+        <div class="flex flex-wrap justify-center gap-2 mb-8 bg-white dark:bg-slate-900 p-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 w-fit mx-auto">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-6 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
+                <i data-lucide="layout-dashboard" class="w-4 h-4 inline-block ml-1"></i> لوحة التحكم والأرباح
+            </button>
+            <button onclick="switchTab('codes')" id="tab-codes" class="tab-btn px-6 py-2 rounded-lg text-sm font-bold transition-all bg-blue-600 text-white shadow-md">
+                <i data-lucide="key" class="w-4 h-4 inline-block ml-1"></i> الاشتراكات
+            </button>
+            <button onclick="switchTab('customers')" id="tab-customers" class="tab-btn px-6 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
+                <i data-lucide="users" class="w-4 h-4 inline-block ml-1"></i> العملاء
+            </button>
+            <button onclick="switchTab('services')" id="tab-services" class="tab-btn px-6 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
+                <i data-lucide="package" class="w-4 h-4 inline-block ml-1"></i> الخدمات والأسعار
+            </button>
+        </div>
+
+        <!-- Content Sections -->
+        
+        <!-- 0. Dashboard Section -->
+        <div id="view-dashboard" class="view-section hidden animate-fadeIn space-y-6">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+                        <i data-lucide="activity" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs font-bold">الاشتراكات النشطة</p>
+                        <h3 id="stat-active" class="text-2xl font-bold text-slate-800 dark:text-white">...</h3>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-4">
+                    <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                        <i data-lucide="banknote" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs font-bold">إجمالي المبيعات (للفترة)</p>
+                        <h3 id="stat-revenue" class="text-2xl font-bold text-slate-800 dark:text-white">...</h3>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-4">
+                    <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs font-bold">إجمالي العملاء</p>
+                        <h3 id="stat-customers" class="text-2xl font-bold text-slate-800 dark:text-white">...</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profits & Filter -->
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                    <h2 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                        <i data-lucide="pie-chart" class="w-5 h-5 text-slate-600 dark:text-slate-400"></i> تقرير الأرباح والمبيعات
+                    </h2>
+                    <div class="flex gap-2 items-center">
+                        <input type="date" id="filter-start" class="p-2 bg-slate-50 dark:bg-slate-800 dark:text-white dark:border-slate-700 border border-slate-200 rounded-lg text-xs">
+                        <span class="text-slate-400">-</span>
+                        <input type="date" id="filter-end" class="p-2 bg-slate-50 dark:bg-slate-800 dark:text-white dark:border-slate-700 border border-slate-200 rounded-lg text-xs">
+                        <button onclick="loadDashboard()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-900 transition">تصفية</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-sm" id="profits-table">
+                        <!-- Populated by JS -->
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. Codes Section -->
+        <div id="view-codes" class="view-section grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
             <!-- Generator Card -->
             <div class="lg:col-span-1">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-6">
-                    <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 sticky top-6">
+                    <h2 class="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                         <i data-lucide="zap" class="w-5 h-5 text-blue-600"></i> إنشاء كود جديد
                     </h2>
                     
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">مدة الاشتراك (أيام)</label>
-                            <input type="number" id="days" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700" placeholder="365" value="365">
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">العميل</label>
+                            <div class="relative">
+                                <select id="select-customer" class="w-full p-3 bg-slate-50 dark:bg-slate-800 dark:text-white dark:border-slate-700 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm appearance-none">
+                                    <option value="">اختر عميل...</option>
+                                </select>
+                                <i data-lucide="chevron-down" class="w-4 h-4 absolute left-3 top-3.5 text-slate-400 pointer-events-none"></i>
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">ملاحظات / اسم العميل</label>
-                            <input type="text" id="notes" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm" placeholder="اسم العميل...">
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">الخدمة</label>
+                            <div class="relative">
+                                <select id="select-service" onchange="onServiceSelect()" class="w-full p-3 bg-slate-50 dark:bg-slate-800 dark:text-white dark:border-slate-700 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm appearance-none">
+                                    <option value="">اختر خدمة...</option>
+                                </select>
+                                <i data-lucide="chevron-down" class="w-4 h-4 absolute left-3 top-3.5 text-slate-400 pointer-events-none"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400">مدة الاشتراك</label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="is-lifetime" onchange="toggleDuration()" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300">
+                                    <span class="text-xs font-bold text-blue-600">مدة مفتوحة (Lifetime)</span>
+                                </label>
+                            </div>
+                            <input type="number" id="days" class="w-full p-3 bg-slate-50 dark:bg-slate-800 dark:text-white dark:border-slate-700 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700" placeholder="عدد الأيام (مثال: 365)" value="365">
                         </div>
                         
                         <button onclick="generateLocal()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-900 transition flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10">
@@ -57,18 +167,18 @@
                     </div>
 
                     <!-- Result Area -->
-                    <div id="result-area" class="hidden mt-6 pt-6 border-t border-slate-100 animate-fadeIn">
+                    <div id="result-area" class="hidden mt-6 pt-6 border-t border-slate-100 dark:border-slate-700 animate-fadeIn">
                         <div class="mb-2 flex justify-between items-end">
-                            <label class="text-xs font-bold text-slate-500">الكود المولد</label>
+                            <label class="text-xs font-bold text-slate-500 dark:text-slate-400">الكود المولد</label>
                             <span id="expiry-preview" class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold"></span>
                         </div>
-                        <textarea id="code-output" readonly class="w-full h-24 p-3 text-[10px] font-mono bg-slate-50 border border-slate-200 rounded-xl resize-none mb-3 focus:ring-2 focus:ring-blue-500 outline-none" onclick="this.select()"></textarea>
+                        <textarea id="code-output" readonly class="w-full h-24 p-3 text-[10px] font-mono bg-slate-50 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 border border-slate-200 rounded-xl resize-none mb-3 focus:ring-2 focus:ring-blue-500 outline-none" onclick="this.select()"></textarea>
                         
                         <div class="grid grid-cols-2 gap-2">
-                            <button onclick="copyCode()" class="bg-white border border-slate-200 text-slate-600 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 flex items-center justify-center gap-1 transition-colors">
+                            <button onclick="copyCode()" class="bg-white dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 border border-slate-200 text-slate-600 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-center gap-1 transition-colors">
                                 <i data-lucide="copy" class="w-3 h-3"></i> نسخ
                             </button>
-                            <button onclick="downloadCode()" class="bg-white border border-slate-200 text-slate-600 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 flex items-center justify-center gap-1 transition-colors">
+                            <button onclick="downloadCode()" class="bg-white dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 border border-slate-200 text-slate-600 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-center gap-1 transition-colors">
                                 <i data-lucide="download" class="w-3 h-3"></i> تحميل
                             </button>
                             <button onclick="saveToFirebase()" id="btn-save-db" class="col-span-2 bg-blue-600 text-white py-2.5 rounded-lg text-xs font-bold hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 transition-all active:scale-95">
@@ -81,16 +191,16 @@
 
             <!-- List Card -->
             <div class="lg:col-span-2">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-full flex flex-col">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 h-full flex flex-col">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <h2 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
                             <i data-lucide="database" class="w-5 h-5 text-purple-600"></i> الأكواد المحفوظة
                         </h2>
                         <div class="flex gap-2">
-                            <button onclick="deleteExpiredCodes()" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 border border-red-100">
+                            <button onclick="deleteExpiredCodes()" class="text-[10px] bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 border border-red-100">
                                 <i data-lucide="trash-2" class="w-3 h-3"></i> حذف المنتهي
                             </button>
-                            <button id="refresh-btn" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                            <button id="refresh-btn" class="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
                                 <i data-lucide="refresh-cw" class="w-3 h-3"></i> تحديث
                             </button>
                         </div>
@@ -98,18 +208,132 @@
                     
                     <div class="overflow-x-auto flex-1">
                         <table class="w-full text-right text-sm">
-                            <thead class="bg-slate-50 text-slate-500 font-bold">
+                            <thead class="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold">
                                 <tr>
                                     <th class="p-3 rounded-r-lg">التاريخ</th>
                                     <th class="p-3">العميل</th>
                                     <th class="p-3">الانتهاء</th>
                                     <th class="p-3">الكود</th>
-                                    <th class="p-3 rounded-l-lg text-center">الحالة</th>
+                                    <th class="p-3 rounded-l-lg text-center">إجراءات</th>
                                 </tr>
                             </thead>
-                            <tbody id="firebase-list" class="divide-y divide-slate-100">
+                            <tbody id="firebase-list" class="divide-y divide-slate-100 dark:divide-slate-700">
                                 <tr><td colspan="5" class="p-8 text-center text-slate-400">جاري التحميل...</td></tr>
                             </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Customers Section -->
+        <div id="view-customers" class="view-section hidden grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
+            <!-- Add Customer -->
+            <div class="lg:col-span-1">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 sticky top-6">
+                    <h2 class="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+                        <i data-lucide="user-plus" class="w-5 h-5 text-blue-600"></i> إضافة عميل
+                    </h2>
+                    <div class="space-y-3">
+                        <input type="text" id="cust-name" class="w-full p-3 bg-slate-50 dark:bg-slate-800 dark:text-white dark:border-slate-700 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="اسم العميل">
+                        <div class="flex gap-2">
+                            <select id="cust-country-code" class="w-24 p-3 bg-slate-50 dark:bg-slate-800 dark:text-white dark:border-slate-700 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" dir="ltr">
+                                <option value="966">🇸🇦 +966</option>
+                                <option value="20">🇪🇬 +20</option>
+                                <option value="971">🇦🇪 +971</option>
+                                <option value="965">🇰🇼 +965</option>
+                                <option value="974">🇶🇦 +974</option>
+                                <option value="973">🇧🇭 +973</option>
+                                <option value="968">🇴🇲 +968</option>
+                                <option value="962">🇯🇴 +962</option>
+                                <option value="964">🇮🇶 +964</option>
+                                <option value="">Other</option>
+                            </select>
+                            <input type="tel" id="cust-phone" class="flex-1 p-3 bg-slate-50 dark:bg-slate-800 dark:text-white dark:border-slate-700 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="رقم الهاتف">
+                        </div>
+                        <input type="email" id="cust-email" class="w-full p-3 bg-slate-50 dark:bg-slate-800 dark:text-white dark:border-slate-700 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="البريد الإلكتروني (اختياري)">
+                        <textarea id="cust-notes" class="w-full p-3 bg-slate-50 dark:bg-slate-800 dark:text-white dark:border-slate-700 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 h-20 resize-none" placeholder="ملاحظات إضافية..."></textarea>
+                        <button onclick="saveCustomer()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-900/20">حفظ العميل</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Customers List -->
+            <div class="lg:col-span-2">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 h-full flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                            <i data-lucide="users" class="w-5 h-5 text-green-600"></i> قائمة العملاء
+                        </h2>
+                        <button onclick="loadCustomers()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors">
+                            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-right text-sm">
+                            <thead class="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold">
+                                <tr>
+                                    <th class="p-3 rounded-r-lg">الاسم</th>
+                                    <th class="p-3">الهاتف</th>
+                                    <th class="p-3">ملاحظات</th>
+                                    <th class="p-3 rounded-l-lg text-center">تواصل</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customers-list" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Services Section -->
+        <div id="view-services" class="view-section hidden grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
+            <!-- Add Service -->
+            <div class="lg:col-span-1">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 sticky top-6">
+                    <h2 class="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+                        <i data-lucide="plus-circle" class="w-5 h-5 text-blue-600"></i> إضافة خدمة
+                    </h2>
+                    <div class="space-y-3">
+                        <input type="text" id="serv-name" class="w-full p-3 bg-slate-50 dark:bg-slate-800 dark:text-white dark:border-slate-700 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="اسم الخدمة">
+                        <div class="flex gap-2">
+                            <input type="number" id="serv-price" class="flex-1 p-3 bg-slate-50 dark:bg-slate-800 dark:text-white dark:border-slate-700 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="السعر">
+                            <input type="text" id="serv-currency" class="w-20 p-3 bg-slate-50 dark:bg-slate-800 dark:text-white dark:border-slate-700 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 text-center" value="SAR" placeholder="العملة">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="serv-duration" class="flex-1 p-3 bg-slate-50 dark:bg-slate-800 dark:text-white dark:border-slate-700 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="مدة الخدمة (أيام)">
+                            <label class="flex items-center gap-2 cursor-pointer whitespace-nowrap">
+                                <input type="checkbox" id="serv-lifetime" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300">
+                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400">مفتوح (Lifetime)</span>
+                            </label>
+                        </div>
+                        <textarea id="serv-desc" class="w-full p-3 bg-slate-50 dark:bg-slate-800 dark:text-white dark:border-slate-700 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 h-20 resize-none" placeholder="وصف الخدمة..."></textarea>
+                        <button onclick="saveService()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-900/20">حفظ الخدمة</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Services List -->
+            <div class="lg:col-span-2">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 h-full flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                            <i data-lucide="package" class="w-5 h-5 text-orange-600"></i> قائمة الخدمات
+                        </h2>
+                        <button onclick="loadServices()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors">
+                            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-right text-sm">
+                            <thead class="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold">
+                                <tr>
+                                    <th class="p-3 rounded-r-lg">الخدمة</th>
+                                    <th class="p-3">السعر</th>
+                                    <th class="p-3">المدة</th>
+                                    <th class="p-3">الوصف</th>
+                                    <th class="p-3 rounded-l-lg text-center">حذف</th>
+                                </tr>
+                            </thead>
+                            <tbody id="services-list" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody>
                         </table>
                     </div>
                 </div>
@@ -131,7 +355,7 @@
         };
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, Timestamp, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, Timestamp, where, writeBatch, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         let db;
         try {
@@ -139,6 +363,7 @@
             db = getFirestore(app);
             console.log("Firebase Initialized");
             loadCodes();
+            // Load other data lazily or now
         } catch (e) {
             console.error("Firebase Error:", e);
             document.getElementById('firebase-list').innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">خطأ في الاتصال بـ Firebase. تأكد من إعدادات التكوين (Config).<br><span class="text-xs text-slate-400">${e.message}</span></td></tr>`;
@@ -146,10 +371,49 @@
         
         // Global state for current generated code
         let currentGeneratedData = null;
+        window.allServices = {}; // Cache services for price lookup
+
+        window.toggleDuration = function() {
+            const isLifetime = document.getElementById('is-lifetime').checked;
+            const daysInput = document.getElementById('days');
+            if(isLifetime) {
+                daysInput.disabled = true;
+                daysInput.value = '';
+                daysInput.placeholder = 'غير محدود';
+                daysInput.classList.add('bg-slate-200', 'text-slate-400');
+            } else {
+                daysInput.disabled = false;
+                daysInput.value = '365';
+                daysInput.classList.remove('bg-slate-200', 'text-slate-400');
+            }
+        }
+
+        window.onServiceSelect = function() {
+            const id = document.getElementById('select-service').value;
+            const service = window.allServices[id];
+            
+            if(service) {
+                if (service.isLifetime) {
+                    document.getElementById('is-lifetime').checked = true;
+                    toggleDuration();
+                } else if (service.duration) {
+                    document.getElementById('is-lifetime').checked = false;
+                    toggleDuration();
+                    document.getElementById('days').value = service.duration;
+                }
+            } else {
+                // Reset if no service selected
+                document.getElementById('is-lifetime').checked = false; 
+                toggleDuration();
+                document.getElementById('days').value = '365';
+            }
+        }
 
         window.generateLocal = function() {
-            const days = parseInt(document.getElementById('days').value);
-            if (!days) return alert('يرجى إدخال عدد الأيام');
+            const isLifetime = document.getElementById('is-lifetime').checked;
+            let days = isLifetime ? 36500 : parseInt(document.getElementById('days').value); // 100 years for lifetime logic
+            
+            if (!isLifetime && !days) return alert('يرجى إدخال عدد الأيام');
 
             const now = new Date();
             const expiryDate = new Date(now.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -159,7 +423,7 @@
                 created: now.getTime(),
                 expires: expiryDate.getTime(),
                 secret: 'CRP_SECURE_SYSTEM_2025', // مفتاح سري للتحقق
-                type: 'full_access'
+                type: isLifetime ? 'lifetime' : 'limited'
             };
 
             // تشفير البيانات
@@ -168,13 +432,14 @@
 
             document.getElementById('result-area').classList.remove('hidden');
             document.getElementById('code-output').value = code;
-            document.getElementById('expiry-preview').textContent = `صالح حتى: ${expiryDate.toLocaleDateString('ar-EG')}`;
+            document.getElementById('expiry-preview').textContent = isLifetime ? 'صالح: مدى الحياة' : `صالح حتى: ${expiryDate.toLocaleDateString('ar-EG')}`;
             
             // Store for saving
             currentGeneratedData = {
                 code,
                 days,
-                expiryDate
+                expiryDate,
+                isLifetime
             };
             
             // Reset save button
@@ -202,16 +467,33 @@
             btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> جاري الحفظ...';
             lucide.createIcons();
 
-            const notes = document.getElementById('notes').value || '';
+            // Get Selected Data
+            const custSelect = document.getElementById('select-customer');
+            const servSelect = document.getElementById('select-service');
+            const serviceId = servSelect.value;
+            
+            const customerName = custSelect.options[custSelect.selectedIndex].text;
+            
+            // Get price details from cached services
+            const serviceData = window.allServices[serviceId] || {};
+            const serviceName = serviceData.name || (servSelect.selectedIndex > 0 ? servSelect.options[servSelect.selectedIndex].text : 'خدمة غير محددة');
+            const price = serviceData.price ? Number(serviceData.price) : 0;
+            const currency = serviceData.currency || 'SAR';
+            
+            const displayNote = (customerName !== 'اختر عميل...') ? `${customerName} - ${serviceName}` : 'بدون اسم';
 
                 try {
                     await addDoc(collection(db, "subscription_codes"), {
                         code: currentGeneratedData.code,
                         days: currentGeneratedData.days,
-                        notes: notes,
+                        notes: displayNote,
+                        service: serviceName,
+                        price: price,
+                        currency: currency,
                         created_at: Timestamp.now(),
                         expires_at: Timestamp.fromDate(currentGeneratedData.expiryDate),
-                        status: 'active'
+                        status: 'active',
+                        type: currentGeneratedData.isLifetime ? 'lifetime' : 'limited'
                     });
                     loadCodes(); // Refresh list
                     
@@ -271,6 +553,45 @@
             }
         }
 
+        // --- Code Actions (Renew, Edit, Copy) ---
+        window.renewCode = async function(id, currentExpiryMs) {
+            const days = prompt("أدخل عدد الأيام للتمديد:", "30");
+            if(!days || isNaN(days)) return;
+            
+            try {
+                const currentExpiry = new Date(currentExpiryMs);
+                // If expired, start from now, else add to existing
+                const baseDate = currentExpiry < new Date() ? new Date() : currentExpiry;
+                const newExpiry = new Date(baseDate.getTime() + (parseInt(days) * 24 * 60 * 60 * 1000));
+                
+                await updateDoc(doc(db, "subscription_codes", id), {
+                    expires_at: Timestamp.fromDate(newExpiry)
+                });
+                alert("تم تجديد الاشتراك بنجاح");
+                loadCodes();
+            } catch(e) {
+                alert("خطأ في التجديد: " + e.message);
+            }
+        }
+
+        window.editCode = async function(id, currentNotes) {
+            const newNotes = prompt("تعديل ملاحظات / اسم العميل:", currentNotes);
+            if(newNotes === null) return;
+            
+            try {
+                await updateDoc(doc(db, "subscription_codes", id), {
+                    notes: newNotes
+                });
+                loadCodes();
+            } catch(e) {
+                alert("خطأ في التعديل: " + e.message);
+            }
+        }
+        
+        window.copyCodeText = function(code) {
+            navigator.clipboard.writeText(code).then(() => alert("تم نسخ الكود"));
+        }
+
         window.copyCode = function() {
             const copyText = document.getElementById("code-output");
             copyText.select();
@@ -313,13 +634,24 @@
                     const created = formatDate(data.created_at);
                     const expires = formatDate(data.expires_at);
                     
+                    // Calculate status
+                    const isExpired = data.expires_at && data.expires_at.toDate() < new Date();
+                    const statusBadge = isExpired 
+                        ? '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-bold">منتهي</span>'
+                        : '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-[10px] font-bold">نشط</span>';
+
                     html += `
-                        <tr class="hover:bg-slate-50">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                             <td class="p-3 text-slate-500 font-mono text-xs">${created}</td>
                             <td class="p-3 text-slate-700 font-bold text-xs">${data.notes || '-'}</td>
                             <td class="p-3 text-green-600 font-bold text-xs">${expires}</td>
                             <td class="p-3 font-mono text-xs text-slate-500 truncate max-w-[200px]" title="${data.code}">${data.code.substring(0, 20)}...</td>
-                            <td class="p-3 text-center"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-[10px] font-bold">نشط</span></td>
+                            <td class="p-3 text-center flex justify-center gap-1">
+                                <button onclick="copyCodeText('${data.code}')" class="p-1.5 bg-slate-100 text-slate-600 rounded hover:bg-slate-200" title="نسخ"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                                <button onclick="editCode('${doc.id}', '${data.notes || ''}')" class="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100" title="تعديل"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                                <button onclick="renewCode('${doc.id}', ${data.expires_at ? data.expires_at.toMillis() : 0})" class="p-1.5 bg-green-50 text-green-600 rounded hover:bg-green-100" title="تجديد"><i data-lucide="calendar-plus" class="w-3 h-3"></i></button>
+                                <button onclick="deleteCode('${doc.id}')" class="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100" title="حذف"><i data-lucide="trash" class="w-3 h-3"></i></button>
+                            </td>
                         </tr>
                     `;
                 });
@@ -334,6 +666,226 @@
                 }
                 listEl.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">خطأ في الاتصال:<br>${msg}</td></tr>`;
             }
+        }
+
+        window.deleteCode = async function(id) {
+            if(!confirm('حذف هذا الكود؟')) return;
+            await deleteDoc(doc(db, "subscription_codes", id));
+            loadCodes();
+        }
+
+        // --- Customers Logic ---
+        window.saveCustomer = async function() {
+            const name = document.getElementById('cust-name').value;
+            const phone = document.getElementById('cust-phone').value;
+            const code = document.getElementById('cust-country-code').value;
+            const email = document.getElementById('cust-email').value;
+            const notes = document.getElementById('cust-notes').value;
+
+            if(!name || !phone) return alert('الاسم ورقم الهاتف مطلوبان');
+
+            try {
+                await addDoc(collection(db, "customers"), {
+                    name, phone, countryCode: code, email, notes, created_at: Timestamp.now()
+                });
+                alert('تم حفظ العميل');
+                document.getElementById('cust-name').value = '';
+                document.getElementById('cust-phone').value = '';
+                loadCustomers();
+            } catch(e) { alert(e.message); }
+        }
+
+        window.loadCustomers = async function() {
+            if(!db) return;
+            const listEl = document.getElementById('customers-list');
+            const selectEl = document.getElementById('select-customer'); // القائمة المنسدلة
+            listEl.innerHTML = '<tr><td colspan="4" class="text-center p-4">جاري التحميل...</td></tr>';
+            
+            try {
+                const q = query(collection(db, "customers"), orderBy("created_at", "desc"));
+                const snapshot = await getDocs(q);
+                let html = '';
+                let options = '<option value="">اختر عميل...</option>';
+                
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    const fullPhone = (d.countryCode || '') + d.phone;
+                    const waLink = `https://wa.me/${fullPhone.replace(/\+/g,'')}`;
+                    
+                    html += `
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                            <td class="p-3 font-bold text-slate-700 dark:text-slate-200">${d.name}</td>
+                            <td class="p-3 text-slate-600 dir-ltr text-right">${fullPhone}</td>
+                            <td class="p-3 text-xs text-slate-500">${d.notes || '-'}</td>
+                            <td class="p-3 text-center flex justify-center gap-2">
+                                <a href="${waLink}" target="_blank" class="p-1.5 bg-green-100 text-green-600 rounded hover:bg-green-200"><i data-lucide="message-circle" class="w-4 h-4"></i></a>
+                                <button onclick="deleteCustomer('${doc.id}')" class="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                    options += `<option value="${doc.id}">${d.name}</option>`;
+                });
+                listEl.innerHTML = html || '<tr><td colspan="4" class="text-center p-4">لا يوجد عملاء</td></tr>';
+                if(selectEl) selectEl.innerHTML = options;
+                lucide.createIcons();
+            } catch(e) { console.error(e); }
+        }
+
+        window.deleteCustomer = async function(id) {
+            if(confirm('حذف هذا العميل؟')) {
+                await deleteDoc(doc(db, "customers", id));
+                loadCustomers();
+            }
+        }
+
+        // --- Services Logic ---
+        window.saveService = async function() {
+            const name = document.getElementById('serv-name').value;
+            const price = document.getElementById('serv-price').value;
+            const currency = document.getElementById('serv-currency').value;
+            const duration = document.getElementById('serv-duration').value;
+            const isLifetime = document.getElementById('serv-lifetime').checked;
+            const desc = document.getElementById('serv-desc').value;
+
+            if(!name || !price) return alert('الاسم والسعر مطلوبان');
+
+            try {
+                await addDoc(collection(db, "services"), {
+                    name, price, currency, duration, isLifetime, desc, created_at: Timestamp.now()
+                });
+                alert('تم حفظ الخدمة');
+                document.getElementById('serv-name').value = '';
+                document.getElementById('serv-price').value = '';
+                document.getElementById('serv-duration').value = '';
+                document.getElementById('serv-lifetime').checked = false;
+                loadServices();
+            } catch(e) { alert(e.message); }
+        }
+
+        window.loadServices = async function() {
+            if(!db) return;
+            const listEl = document.getElementById('services-list');
+            const selectEl = document.getElementById('select-service'); // القائمة المنسدلة للخدمات
+            listEl.innerHTML = '<tr><td colspan="4" class="text-center p-4">جاري التحميل...</td></tr>';
+            
+            try {
+                const q = query(collection(db, "services"), orderBy("created_at", "desc"));
+                const snapshot = await getDocs(q);
+                let html = '';
+                let options = '<option value="">اختر خدمة...</option>';
+                
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    window.allServices[doc.id] = d; // Cache for price lookup
+                    
+                    const durationText = d.isLifetime ? '<span class="text-blue-600 font-bold">مدى الحياة</span>' : (d.duration ? d.duration + ' يوم' : '-');
+                    html += `
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                            <td class="p-3 font-bold text-slate-700 dark:text-slate-200">${d.name}</td>
+                            <td class="p-3 text-blue-600 font-bold">${d.price} <span class="text-xs text-slate-400">${d.currency}</span></td>
+                            <td class="p-3 text-xs text-slate-600 dark:text-slate-400">${durationText}</td>
+                            <td class="p-3 text-xs text-slate-500">${d.desc || '-'}</td>
+                            <td class="p-3 text-center">
+                                <button onclick="deleteService('${doc.id}')" class="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                    options += `<option value="${doc.id}">${d.name} (${d.price} ${d.currency})</option>`;
+                });
+                listEl.innerHTML = html || '<tr><td colspan="4" class="text-center p-4">لا توجد خدمات</td></tr>';
+                if(selectEl) selectEl.innerHTML = options;
+                lucide.createIcons();
+            } catch(e) { console.error(e); }
+        }
+
+        window.deleteService = async function(id) {
+            if(confirm('حذف هذه الخدمة؟')) {
+                await deleteDoc(doc(db, "services", id));
+                loadServices();
+            }
+        }
+
+        // --- Dashboard Logic ---
+        window.loadDashboard = async function() {
+            if(!db) return;
+            
+            // UI Loading State
+            document.getElementById('stat-active').innerText = '...';
+            document.getElementById('stat-revenue').innerText = '...';
+            document.getElementById('stat-customers').innerText = '...';
+            const tableEl = document.getElementById('profits-table');
+            tableEl.innerHTML = '<thead><tr class="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold"><th class="p-3 rounded-r-lg">التاريخ</th><th class="p-3">الخدمة</th><th class="p-3">العميل</th><th class="p-3 rounded-l-lg">المبلغ</th></tr></thead><tbody class="divide-y divide-slate-100 dark:divide-slate-700"><tr><td colspan="4" class="p-8 text-center text-slate-400">جاري الحساب...</td></tr></tbody>';
+
+            try {
+                // 1. Get Customers Count
+                const custSnap = await getDocs(collection(db, "customers"));
+                document.getElementById('stat-customers').innerText = custSnap.size;
+
+                // 2. Get Subscriptions for Stats & Profits
+                const subsSnap = await getDocs(query(collection(db, "subscription_codes"), orderBy("created_at", "desc")));
+                
+                let activeCount = 0;
+                let totalRevenue = 0;
+                let tableHtml = '';
+                const now = new Date();
+
+                // Filter Dates
+                const startInput = document.getElementById('filter-start').value;
+                const endInput = document.getElementById('filter-end').value;
+                const startDate = startInput ? new Date(startInput) : null;
+                const endDate = endInput ? new Date(endInput) : null;
+                if(endDate) endDate.setHours(23,59,59); // End of day
+
+                subsSnap.forEach(doc => {
+                    const d = doc.data();
+                    const created = d.created_at.toDate();
+                    
+                    // Active Count (Global, not filtered by date usually, but let's keep it global)
+                    if (d.expires_at && d.expires_at.toDate() > now) {
+                        activeCount++;
+                    }
+
+                    // Filter for Profits
+                    if (startDate && created < startDate) return;
+                    if (endDate && created > endDate) return;
+
+                    const price = Number(d.price) || 0;
+                    totalRevenue += price;
+
+                    tableHtml += `
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                            <td class="p-3 text-slate-500 text-xs font-mono">${created.toLocaleDateString('ar-EG')}</td>
+                            <td class="p-3 text-slate-700 dark:text-slate-200 font-bold text-xs">${d.service || '-'}</td>
+                            <td class="p-3 text-slate-600 text-xs">${d.notes ? d.notes.split('-')[0] : '-'}</td>
+                            <td class="p-3 text-green-600 font-bold text-xs">${price} ${d.currency || 'SAR'}</td>
+                        </tr>
+                    `;
+                });
+
+                document.getElementById('stat-active').innerText = activeCount;
+                document.getElementById('stat-revenue').innerText = totalRevenue.toLocaleString() + ' SAR';
+                tableEl.querySelector('tbody').innerHTML = tableHtml || '<tr><td colspan="4" class="p-8 text-center text-slate-400">لا توجد بيانات في هذه الفترة</td></tr>';
+
+            } catch(e) { console.error(e); }
+        }
+
+        // --- Tabs Logic ---
+        window.switchTab = function(tabName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+                el.classList.add('text-slate-600', 'hover:bg-slate-50', 'dark:text-slate-400', 'dark:hover:bg-slate-800');
+            });
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            activeBtn.classList.remove('text-slate-600', 'hover:bg-slate-50', 'dark:text-slate-400', 'dark:hover:bg-slate-800');
+            activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+
+            if(tabName === 'customers') loadCustomers();
+            if(tabName === 'services') loadServices();
+            if(tabName === 'dashboard') loadDashboard();
+            lucide.createIcons();
         }
 
         document.getElementById('refresh-btn').addEventListener('click', loadCodes);
@@ -352,6 +904,17 @@
             }
         }
         document.getElementById('auth-pass').addEventListener('keypress', (e) => e.key === 'Enter' && checkAuth());
+
+        // Dark Mode Toggle
+        window.toggleDarkMode = function() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
     </script>
 </body>
 </html>
